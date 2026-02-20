@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OJCommerce — Outreach Email Schedule</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0a1628; color: #333; }
+
+  /* Navigation Tabs */
+  .tab-nav { display: flex; background: #0a1628; padding: 20px 30px 0; gap: 4px; position: sticky; top: 0; z-index: 100; }
+  .tab-btn { padding: 12px 24px; border: none; border-radius: 8px 8px 0 0; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.3s; }
+  .tab-btn.active { background: #fff; color: #0a1628; }
+  .tab-btn:not(.active) { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); }
+  .tab-btn:hover:not(.active) { background: rgba(255,255,255,0.2); }
+  .tab-btn.blue { border-top: 3px solid #0066FF; }
+  .tab-btn.green { border-top: 3px solid #00C9A7; }
+  .tab-btn.purple { border-top: 3px solid #805AD5; }
+  .tab-btn.orange { border-top: 3px solid #ED8936; }
+
+  .tab-content { display: none; background: #fff; padding: 30px; min-height: 80vh; }
+  .tab-content.active { display: block; }
+
+  h1 { font-size: 24px; color: #0a1628; margin-bottom: 6px; }
+  h2 { font-size: 18px; color: #0066FF; margin: 25px 0 12px; }
+  .subtitle { font-size: 13px; color: #666; margin-bottom: 20px; }
+
+  /* Summary boxes */
+  .summary-row { display: flex; gap: 15px; margin-bottom: 25px; }
+  .summary-box { flex: 1; padding: 16px 20px; border-radius: 10px; color: #fff; text-align: center; font-weight: 700; font-size: 15px; }
+  .summary-box.blue { background: #0066FF; }
+  .summary-box.green { background: #38A169; }
+  .summary-box.purple { background: #805AD5; }
+  .summary-box.orange { background: #ED8936; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 13px; }
+  th { background: #0a1628; color: #fff; padding: 10px 8px; text-align: center; font-size: 12px; position: sticky; top: 60px; z-index: 50; }
+  td { padding: 10px 8px; border: 1px solid #e2e8f0; vertical-align: top; }
+
+  /* Week headers */
+  .week-header td { background: #0a1628; color: #fff; font-weight: 700; font-size: 14px; text-align: center; padding: 12px; }
+  .month-header td { background: #0a1628; color: #fff; font-weight: 700; font-size: 14px; text-align: center; padding: 12px; }
+  .month-header.green td { background: #38A169; }
+
+  /* Day colors */
+  .monday { background: #E8F4FD; }
+  .tuesday { background: #E9D8FD; }
+  .wednesday { background: #FED7AA; }
+  .thursday { background: #C6F6D5; }
+  .friday { background: #FEEBC8; }
+  .weekend { background: #F7FAFC; color: #999; font-style: italic; }
+
+  /* Special cells */
+  .emails-count { color: #0066FF; font-weight: 700; font-size: 15px; text-align: center; }
+  .followup-count { color: #ED8936; font-weight: 700; font-size: 14px; text-align: center; }
+  .report-note { background: #FFFBEB !important; color: #E53E3E; font-weight: 700; font-size: 12px; }
+  .actions-cell { white-space: pre-line; font-size: 12px; color: #555; line-height: 1.5; }
+  .task-type { font-weight: 700; font-size: 12px; text-align: center; }
+  .day-name { color: #0066FF; font-weight: 700; text-align: center; }
+  .zero { color: #ccc; text-align: center; }
+
+  /* Totals */
+  .totals-table { max-width: 700px; margin: 20px auto; }
+  .totals-table td { padding: 12px 16px; font-size: 14px; }
+  .totals-table .label { font-weight: 600; }
+  .totals-table .value { color: #0066FF; font-weight: 700; font-size: 15px; text-align: center; }
+  .totals-table .target { background: #C6F6D5; }
+  .totals-table .target .value { color: #38A169; }
+
+  /* Time blocks */
+  .time-block-table td { padding: 14px 12px; }
+  .time-label { font-weight: 700; white-space: nowrap; text-align: center; }
+  .activity-label { color: #0066FF; font-weight: 700; text-align: center; }
+  .lunch { background: #F7FAFC; }
+  .send-new { background: #E8F4FD; }
+  .content-block { background: #C6F6D5; }
+  .report-block { background: #FFFBEB; }
+
+  /* Overview */
+  .ref-high { color: #38A169; font-weight: 700; }
+  .ref-low { color: #0066FF; font-weight: 700; }
+  .links-green { color: #38A169; font-weight: 700; font-size: 14px; }
+  .cumul-blue { color: #0066FF; font-weight: 700; font-size: 14px; }
+  .highlight-row { background: #C6F6D5 !important; }
+  .highlight-row td { background: #C6F6D5 !important; }
+
+  /* Tracker */
+  .status-yes { color: #38A169; font-weight: 700; background: #C6F6D5; }
+  .status-pending { color: #0066FF; font-weight: 700; background: #E8F4FD; }
+  .status-noreply { color: #999; }
+  .status-rejected { color: #E53E3E; background: #FFE0E0; }
+  .input-row td { background: #FFFBEB; min-height: 30px; }
+
+  .center { text-align: center; }
+  .alt-row { background: #F7FAFC; }
+
+  /* Best time tip */
+  .tip { background: #C6F6D5; color: #38A169; font-weight: 600; padding: 12px 20px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<div class="tab-nav">
+  <button class="tab-btn blue active" onclick="showTab('tab1')">Month 1 Daily Schedule</button>
+  <button class="tab-btn green" onclick="showTab('tab2')">Daily Time Blocks</button>
+  <button class="tab-btn purple" onclick="showTab('tab3')">12-Month Weekly Overview</button>
+  <button class="tab-btn orange" onclick="showTab('tab4')">Outreach Tracker</button>
+</div>
+
+<!-- ==================== TAB 1: MONTH 1 DAILY SCHEDULE ==================== -->
+<div id="tab1" class="tab-content active">
+  <h1>OJCOMMERCE — MONTH 1 DAILY OUTREACH SCHEDULE</h1>
+  <p class="subtitle">Target: 4 backlinks | ~80 outreach emails | 4 emails/day (Mon-Fri) | Weeks 1-2: Setup & Research | Weeks 3-4: Active Outreach</p>
+
+  <div class="summary-row">
+    <div class="summary-box blue">Month 1 Target: 4 Links</div>
+    <div class="summary-box green">Emails Required: ~80</div>
+    <div class="summary-box purple">Daily Rate: 4 emails/day</div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:4%">Day</th>
+        <th style="width:7%">Date</th>
+        <th style="width:8%">Day of Week</th>
+        <th style="width:8%">Time Block</th>
+        <th style="width:10%">Task Type</th>
+        <th style="width:28%">Specific Actions</th>
+        <th style="width:6%">Emails</th>
+        <th style="width:7%">Follow-ups</th>
+        <th style="width:22%">Notes / Tips</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- WEEK 1 -->
+      <tr class="week-header"><td colspan="9">WEEK 1: SETUP, RESEARCH & AUDIT</td></tr>
+
+      <tr class="monday">
+        <td class="center"><b>1</b></td><td class="center"><b>Day 1</b></td>
+        <td class="day-name">Monday</td><td class="center" style="font-size:11px">10AM-1PM<br>2PM-4PM</td>
+        <td class="task-type">SETUP & AUDIT</td>
+        <td class="actions-cell">1. Run OJCommerce through Ahrefs
+2. Document current DR, backlinks, referring domains
+3. Set up outreach tracking spreadsheet
+4. Set up email templates</td>
+        <td class="zero">0</td><td class="zero">0</td>
+        <td style="font-size:12px">No emails yet — foundation day. Get all tools and templates ready.</td>
+      </tr>
+
+      <tr class="tuesday">
+        <td class="center"><b>2</b></td><td class="center"><b>Day 2</b></td>
+        <td class="day-name">Tuesday</td><td class="center" style="font-size:11px">10AM-1PM<br>2PM-4PM</td>
+        <td class="task-type">COMPETITOR RESEARCH</td>
+        <td class="actions-cell">1. Run One Stop Bedroom through Ahrefs
+2. Run Rooms To Go through Ahrefs
+3. Run Bed Bath & Beyond through Ahrefs
+4. Document all competitor data</td>
+        <td class="zero">0</td><td class="zero">0</td>
+        <td class="report-note">REPORT TO ALKESH: Tuesday update #1 — share audit progress.</td>
+      </tr>
+
+      <tr class="wednesday">
+        <td class="center"><b>3</b></td><td class="center"><b>Day 3</b></td>
+        <td class="day-name">Wednesday</td><td class="center" style="font-size:11px">10AM-1PM<br>2PM-4PM</td>
+        <td class="task-type">COMPETITOR RESEARCH</td>
+        <td class="actions-cell">1. Run Wayfair through Ahrefs
+2. Run Ashley Furniture through Ahrefs
+3. Run Backlink Gap analysis (all 5 vs OJCommerce)
+4. Identify top 20 gap opportunities</td>
+        <td class="zero">0</td><td class="zero">0</td>
+        <td style="font-size:12px">Focus on finding DR 60+ sites that link to competitors but NOT OJCommerce.</td>
+      </tr>
+
+      <tr class="thursday">
+        <td class="center"><b>4</b></td><td class="center"><b>Day 4</b></td>
+        <td class="day-name">Thursday</td><td class="center" style="font-size:11px">10AM-1PM<br>2PM-4PM</td>
+        <td class="task-type">PROSPECT LIST BUILDING</td>
+        <td class="actions-cell">1. Research 25 potential target websites
+2. Verify each: DR 60+, real US traffic, furniture niche
+3. Find contact emails using Hunter.io
+4. Add to prospect spreadsheet</td>
+        <td class="zero">0</td><td class="zero">0</td>
+        <td style="font-size:12px">Quality over quantity. Only add sites that meet ALL criteria.</td>
+      </tr>
+
+      <tr class="friday">
+        <td class="center"><b>5</b></td><td class="center"><b>Day 5</b></td>
+        <td class="day-name">Friday</td><td class="center" style="font-size:11px">10AM-1PM<br>2PM-4PM</td>
+        <td class="task-type">PROSPECT LIST + FIRST EMAILS</td>
+        <td class="actions-cell">1. Research 15 more prospect websites
+2. Finalize Week 1 prospect list (40 prospects)
+3. Send FIRST 4 outreach emails to best prospects
+4. Prepare Week 2 plan</td>
+        <td class="emails-count">4</td><td class="zero">0</td>
+        <td class="report-note">REPORT TO ALKESH: Friday update #1 — share audit results, competitor data, prospect list.</td>
+      </tr>
+
+      <tr class="weekend"><td colspan="9" style="text-align:center;padding:10px">⬛ WEEKEND — No outreach on weekends. Review responses if any come in. Don't reply until Monday.</td></tr>
+
+      <!-- WEEK 2 -->
+      <tr class="week-header"><td colspan="9">WEEK 2: OUTREACH BEGINS</td></tr>
+
+      <tr class="monday">
+        <td class="center"><b>6</b></td><td class="center"><b>Day 6</b></td>
+        <td class="day-name">Monday</td><td class="center" style="font-size:11px">10AM-11AM<br>11AM-1PM<br>2PM-4PM</td>
+        <td class="task-type">OUTREACH + HARO</td>
+        <td class="actions-cell">1. Check for responses from Friday emails
+2. Sign up for HARO (connectively.us)
+3. Send 4 NEW outreach emails (guest post pitches)
+4. Respond to 2 HARO queries</td>
+        <td class="emails-count">4</td><td class="zero">0</td>
+        <td style="font-size:12px">Start HARO early — responses take time but yield high-DR links.</td>
+      </tr>
+
+      <tr class="tuesday">
+        <td class="center"><b>7</b></td><td class="center"><b>Day 7</b></td>
+        <td class="day-name">Tuesday</td><td class="center" style="font-size:11px">10AM-11AM<br>11AM-1PM<br>2PM-4PM</td>
+        <td class="task-type">OUTREACH + FOLLOW-UP</td>
+        <td class="actions-cell">1. Send 4 NEW outreach emails
+2. Send Follow-up #1 to Day 5 emails (3 days later)
+3. Respond to any HARO queries
+4. Research 5 new prospects</td>
+        <td class="emails-count">4</td><td class="followup-count">4</td>
+        <td class="report-note">REPORT TO ALKESH: Tuesday update #2 — outreach started, X emails sent.</td>
+      </tr>
+
+      <tr class="wednesday">
+        <td class="center"><b>8</b></td><td class="center"><b>Day 8</b></td>
+        <td class="day-name">Wednesday</td><td class="center" style="font-size:11px">10AM-11AM<br>11AM-1PM<br>2PM-4PM</td>
+        <td class="task-type">OUTREACH + CONTENT</td>
+        <td class="actions-cell">1. Send 4 NEW outreach emails
+2. If anyone said YES — start writing article
+3. Respond to HARO queries
+4. Research 5 new prospects</td>
+        <td class="emails-count">4</td><td class="zero">0</td>
+        <td style="font-size:12px">If you get a YES, prioritize writing content immediately.</td>
+      </tr>
+
+      <tr class="thursday">
+        <td class="center"><b>9</b></td><td class="center"><b>Day 9</b></td>
+        <td class="day-name">Thursday</td><td class="center" style="font-size:11px">10AM-11AM<br>11AM-1PM<br>2PM-4PM</td>
+        <td class="task-type">OUTREACH + FOLLOW-UP</td>
+        <td class="actions-cell">1. Send 4 NEW outreach emails
+2. Send Follow-up #1 to Monday emails
+3. Continue writing content for any YES responses
+4. Respond to HARO</td>
+        <td class="emails-count">4</td><td class="followup-count">4</td>
+        <td style="font-size:12px">Follow-up emails get 30% more responses than first emails.</td>
+      </tr>
+
+      <tr class="friday">
+        <td class="center"><b>10</b></td><td class="center"><b>Day 10</b></td>
+        <td class="day-name">Friday</td><td class="center" style="font-size:11px">10AM-11AM<br>11AM-1PM<br>2PM-4PM</td>
+        <td class="task-type">OUTREACH + REPORT</td>
+        <td class="actions-cell">1. Send 4 NEW outreach emails
+2. Send Follow-up #1 to Tuesday emails
+3. Submit any completed articles
+4. Prepare weekly report for Alkesh</td>
+        <td class="emails-count">4</td><td class="followup-count">4</td>
+        <td class="report-note">REPORT TO ALKESH: Friday update #2 — emails sent, responses received, content status.</td>
+      </tr>
+
+      <tr class="weekend"><td colspan="9" style="text-align:center;padding:10px">⬛ WEEKEND — Review responses. Plan next week.</td></tr>
+
+      <!-- WEEK 3 -->
+      <tr class="week-header"><td colspan="9">WEEK 3: SCALE OUTREACH</td></tr>
+
+      <tr class="monday">
+        <td class="center"><b>11</b></td><td class="center"><b>Day 11</b></td>
+        <td class="day-name">Monday</td><td class="center" style="font-size:11px">10AM-11AM<br>11AM-1PM<br>2PM-4PM</td>
+        <td class="task-type">OUTREACH + FOLLOW-UP</td>
+        <td class="actions-cell">1. Send 4 NEW outreach emails
+2. Send Follow-up #2 (final) to Day 5 emails
+3. Send Follow-up #1 to Wednesday emails
+4. HARO responses</td>
+        <td class="emails-count">4</td><td class="followup-count">4-8</td>
+        <td style="font-size:12px">Week 3 is when first links typically go live.</td>
+      </tr>
+
+      <tr class="tuesday">
+        <td class="center"><b>12</b></td><td class="center"><b>Day 12</b></td>
+        <td class="day-name">Tuesday</td><td class="center" style="font-size:11px">10AM-11AM<br>11AM-1PM<br>2PM-4PM</td>
+        <td class="task-type">OUTREACH + CONTENT</td>
+        <td class="actions-cell">1. Send 4 NEW outreach emails
+2. Write/submit articles for YES responses
+3. Follow-up on pending submissions
+4. HARO responses</td>
+        <td class="emails-count">4</td><td class="followup-count">2-4</td>
+        <td class="report-note">REPORT TO ALKESH: Tuesday update #3 — first links may be live!</td>
+      </tr>
+
+      <tr class="wednesday">
+        <td class="center"><b>13</b></td><td class="center"><b>Day 13</b></td>
+        <td class="day-name">Wednesday</td><td class="center" style="font-size:11px">10AM-11AM<br>11AM-1PM<br>2PM-4PM</td>
+        <td class="task-type">OUTREACH + VERIFY</td>
+        <td class="actions-cell">1. Send 4 NEW outreach emails
+2. Verify any published links (check dofollow)
+3. Document acquired links in backlink log
+4. Follow-ups</td>
+        <td class="emails-count">4</td><td class="followup-count">2-4</td>
+        <td style="font-size:12px">Every published link must be verified and documented immediately.</td>
+      </tr>
+
+      <tr class="thursday">
+        <td class="center"><b>14</b></td><td class="center"><b>Day 14</b></td>
+        <td class="day-name">Thursday</td><td class="center" style="font-size:11px">10AM-11AM<br>11AM-1PM<br>2PM-4PM</td>
+        <td class="task-type">OUTREACH + FOLLOW-UP</td>
+        <td class="actions-cell">1. Send 4 NEW outreach emails
+2. Send follow-ups to previous week's emails
+3. Continue content creation for YES responses
+4. HARO</td>
+        <td class="emails-count">4</td><td class="followup-count">4-6</td>
+        <td style="font-size:12px">By now you should have 1-2 links acquired or in pipeline.</td>
+      </tr>
+
+      <tr class="friday">
+        <td class="center"><b>15</b></td><td class="center"><b>Day 15</b></td>
+        <td class="day-name">Friday</td><td class="center" style="font-size:11px">10AM-11AM<br>11AM-1PM<br>2PM-4PM</td>
+        <td class="task-type">OUTREACH + REPORT</td>
+        <td class="actions-cell">1. Send 4 NEW outreach emails
+2. Final follow-ups on old prospects
+3. Update backlink log
+4. Weekly report to Alkesh</td>
+        <td class="emails-count">4</td><td class="followup-count">2-4</td>
+        <td class="report-note">REPORT TO ALKESH: Friday update #3 — links acquired, pipeline status.</td>
+      </tr>
+
+      <tr class="weekend"><td colspan="9" style="text-align:center;padding:10px">⬛ WEEKEND — Review and plan final week.</td></tr>
+
+      <!-- WEEK 4 -->
+      <tr class="week-header"><td colspan="9">WEEK 4: CLOSE & DELIVER</td></tr>
+
+      <tr class="monday">
+        <td class="center"><b>16</b></td><td class="center"><b>Day 16</b></td>
+        <td class="day-name">Monday</td><td class="center" style="font-size:11px">10AM-11AM<br>11AM-1PM<br>2PM-4PM</td>
+        <td class="task-type">OUTREACH + CLOSE</td>
+        <td class="actions-cell">1. Send 4 NEW outreach emails
+2. Follow up on all pending YES responses
+3. Push for article publication on accepted posts
+4. HARO responses</td>
+        <td class="emails-count">4</td><td class="followup-count">4-6</td>
+        <td style="font-size:12px">Push to close any pending placements before month end.</td>
+      </tr>
+
+      <tr class="tuesday">
+        <td class="center"><b>17</b></td><td class="center"><b>Day 17</b></td>
+        <td class="day-name">Tuesday</td><td class="center" style="font-size:11px">10AM-11AM<br>11AM-1PM<br>2PM-4PM</td>
+        <td class="task-type">OUTREACH + CONTENT</td>
+        <td class="actions-cell">1. Send 4 NEW outreach emails
+2. Submit final articles
+3. Verify all live links
+4. Update tracking spreadsheet</td>
+        <td class="emails-count">4</td><td class="followup-count">2-4</td>
+        <td class="report-note">REPORT TO ALKESH: Tuesday update #4 — final week push.</td>
+      </tr>
+
+      <tr class="wednesday">
+        <td class="center"><b>18</b></td><td class="center"><b>Day 18</b></td>
+        <td class="day-name">Wednesday</td><td class="center" style="font-size:11px">10AM-1PM<br>2PM-4PM</td>
+        <td class="task-type">CONTENT + VERIFY</td>
+        <td class="actions-cell">1. Send 2 NEW outreach emails
+2. Focus on getting pending articles published
+3. Verify all links
+4. Build Month 2 prospect list</td>
+        <td class="emails-count">2</td><td class="followup-count">2-4</td>
+        <td style="font-size:12px">Start building Month 2 pipeline while closing Month 1.</td>
+      </tr>
+
+      <tr class="thursday">
+        <td class="center"><b>19</b></td><td class="center"><b>Day 19</b></td>
+        <td class="day-name">Thursday</td><td class="center" style="font-size:11px">10AM-1PM<br>2PM-4PM</td>
+        <td class="task-type">FINAL PUSH</td>
+        <td class="actions-cell">1. Send 2 NEW outreach emails
+2. Final follow-ups on everything pending
+3. Verify and document all links
+4. Prepare monthly report</td>
+        <td class="emails-count">2</td><td class="followup-count">4-6</td>
+        <td style="font-size:12px">Last push to hit 4-link target.</td>
+      </tr>
+
+      <tr class="friday">
+        <td class="center"><b>20</b></td><td class="center"><b>Day 20</b></td>
+        <td class="day-name">Friday</td><td class="center" style="font-size:11px">10AM-1PM<br>2PM-4PM</td>
+        <td class="task-type">MONTHLY REPORT</td>
+        <td class="actions-cell">1. Finalize all link verifications
+2. Complete Month 1 backlink report
+3. Referral traffic snapshot
+4. Present Month 2 plan to Alkesh</td>
+        <td class="zero">0</td><td class="zero">0</td>
+        <td class="report-note">REPORT TO ALKESH: Full Month 1 Report — links acquired, traffic data, Month 2 strategy.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Month 1 Totals -->
+  <h2>MONTH 1 TOTALS</h2>
+  <table class="totals-table">
+    <tr><td class="label">Total Working Days</td><td class="value">20 days</td></tr>
+    <tr class="alt-row"><td class="label">Total NEW Outreach Emails</td><td class="value">~72-80 emails</td></tr>
+    <tr><td class="label">Total Follow-up Emails</td><td class="value">~40-55 follow-ups</td></tr>
+    <tr class="alt-row"><td class="label">Total Emails Sent (all types)</td><td class="value">~120-135 emails</td></tr>
+    <tr><td class="label">HARO Responses</td><td class="value">~15-20 responses</td></tr>
+    <tr class="alt-row"><td class="label">Expected YES Responses</td><td class="value">4-8 (5-10% of outreach)</td></tr>
+    <tr class="target"><td class="label">Target Links Acquired</td><td class="value">4 backlinks (DR 60+)</td></tr>
+    <tr class="alt-row"><td class="label">Articles Written</td><td class="value">4-6 guest posts</td></tr>
+    <tr><td class="label">Reports to Alkesh</td><td class="value">8 reports (2x per week)</td></tr>
+  </table>
+</div>
+
+<!-- ==================== TAB 2: DAILY TIME BLOCKS ==================== -->
+<div id="tab2" class="tab-content">
+  <h1>IDEAL DAILY SCHEDULE — OUTREACH TIME BLOCKS</h1>
+  <div class="tip">Best time to send outreach emails: Tuesday-Thursday, 10 AM-12 PM recipient's time zone (EST for US)</div>
+
+  <table class="time-block-table">
+    <thead>
+      <tr><th style="width:15%">Time Block</th><th style="width:25%">Activity</th><th>Details</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="time-label">10:00 - 10:30 AM</td>
+        <td class="activity-label">CHECK INBOX & RESPOND</td>
+        <td class="actions-cell">1. Check for replies from previous outreach
+2. Respond to YES replies immediately
+3. Handle any editor questions or revision requests
+4. Check HARO daily digest email</td>
+      </tr>
+      <tr class="send-new">
+        <td class="time-label">10:30 - 11:30 AM</td>
+        <td class="activity-label">SEND NEW OUTREACH EMAILS</td>
+        <td class="actions-cell">1. Send 4 personalized outreach emails
+2. Each email should be customized (not copy-paste)
+3. Reference specific article on their site
+4. Use email templates but personalize 20-30%</td>
+      </tr>
+      <tr>
+        <td class="time-label">11:30 AM - 12:00 PM</td>
+        <td class="activity-label">SEND FOLLOW-UPS</td>
+        <td class="actions-cell">1. Follow up on emails sent 3-4 days ago (Follow-up #1)
+2. Follow up on emails sent 10 days ago (Follow-up #2 — final)
+3. Update tracking spreadsheet with status</td>
+      </tr>
+      <tr class="content-block">
+        <td class="time-label">12:00 - 1:00 PM</td>
+        <td class="activity-label">CONTENT WRITING</td>
+        <td class="actions-cell">1. Write guest post articles for approved placements
+2. 1,500-2,000 words per article
+3. Include natural OJCommerce backlink
+4. Professional, trust-driven, value-focused tone</td>
+      </tr>
+      <tr class="lunch">
+        <td class="time-label">1:00 - 2:00 PM</td>
+        <td class="activity-label" style="color:#999">LUNCH BREAK</td>
+        <td style="color:#999;text-align:center;font-style:italic">Take a break!</td>
+      </tr>
+      <tr>
+        <td class="time-label">2:00 - 3:00 PM</td>
+        <td class="activity-label">PROSPECT RESEARCH</td>
+        <td class="actions-cell">1. Find 5 new potential target websites
+2. Verify DR 60+, US traffic, furniture niche
+3. Find contact emails via Hunter.io
+4. Add to prospect spreadsheet</td>
+      </tr>
+      <tr class="alt-row">
+        <td class="time-label">3:00 - 3:30 PM</td>
+        <td class="activity-label">HARO RESPONSES</td>
+        <td class="actions-cell">1. Check afternoon HARO digest
+2. Respond to 1-2 relevant journalist queries
+3. Provide expert quotes as OJCommerce representative</td>
+      </tr>
+      <tr>
+        <td class="time-label">3:30 - 4:00 PM</td>
+        <td class="activity-label">TRACK & DOCUMENT</td>
+        <td class="actions-cell">1. Update outreach tracking spreadsheet
+2. Verify any newly published links
+3. Document acquired links in backlink log
+4. Prepare notes for Alkesh's report (if report day)</td>
+      </tr>
+      <tr class="report-block">
+        <td class="time-label">4:00 - 4:30 PM</td>
+        <td class="activity-label" style="color:#E53E3E">REPORTING (Tue & Fri only)</td>
+        <td class="actions-cell" style="color:#E53E3E;font-weight:600">1. Tuesday: Send mid-week update to Alkesh
+2. Friday: Send end-of-week update to Alkesh
+3. Include: emails sent, responses, links acquired, pipeline</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ==================== TAB 3: 12-MONTH WEEKLY OVERVIEW ==================== -->
+<div id="tab3" class="tab-content">
+  <h1>OJCOMMERCE — 12-MONTH WEEKLY OUTREACH OVERVIEW</h1>
+  <p class="subtitle">Complete week-by-week breakdown of outreach volume, link targets, and projected referral traffic growth</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Month</th><th>Week</th><th>New Emails<br>/Week</th><th>Follow-ups<br>/Week</th><th>HARO<br>Responses</th><th>Total Emails<br>/Week</th><th>Links<br>Target</th><th>Cumulative<br>Links</th><th>Referral<br>Traffic %</th><th>Key Focus</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Month 1 -->
+      <tr class="month-header"><td colspan="10">MONTH 1: FOUNDATION (Target: 4 links)</td></tr>
+      <tr><td><b>M1</b></td><td><b>Week 1</b></td><td class="emails-count">4</td><td class="zero">0</td><td class="center">0</td><td class="center"><b>4</b></td><td class="links-green">0</td><td class="cumul-blue">0</td><td class="ref-low">0.28%</td><td style="font-size:12px">Setup, audit, competitor research, prospect list</td></tr>
+      <tr class="alt-row"><td><b>M1</b></td><td><b>Week 2</b></td><td class="emails-count">20</td><td class="followup-count">4</td><td class="center">4</td><td class="center"><b>28</b></td><td class="links-green">0-1</td><td class="cumul-blue">0-1</td><td class="ref-low">0.28%</td><td style="font-size:12px">Active outreach begins, HARO signup</td></tr>
+      <tr><td><b>M1</b></td><td><b>Week 3</b></td><td class="emails-count">20</td><td class="followup-count">12</td><td class="center">4</td><td class="center"><b>36</b></td><td class="links-green">1-2</td><td class="cumul-blue">1-3</td><td class="ref-low">0.30%</td><td style="font-size:12px">Scale outreach, first YES responses, content writing</td></tr>
+      <tr class="alt-row"><td><b>M1</b></td><td><b>Week 4</b></td><td class="emails-count">12</td><td class="followup-count">10</td><td class="center">4</td><td class="center"><b>26</b></td><td class="links-green">1-2</td><td class="cumul-blue">2-4</td><td class="ref-low">0.43%</td><td style="font-size:12px">Close placements, verify links, monthly report</td></tr>
+
+      <!-- Month 2 -->
+      <tr class="month-header"><td colspan="10">MONTH 2: SCALE (Target: 6 links)</td></tr>
+      <tr><td><b>M2</b></td><td><b>Week 5</b></td><td class="emails-count">24</td><td class="followup-count">8</td><td class="center">4</td><td class="center"><b>36</b></td><td class="links-green">1-2</td><td class="cumul-blue">5-6</td><td class="ref-low">0.50%</td><td style="font-size:12px">New prospect batch, continued outreach</td></tr>
+      <tr class="alt-row"><td><b>M2</b></td><td><b>Week 6</b></td><td class="emails-count">24</td><td class="followup-count">12</td><td class="center">4</td><td class="center"><b>40</b></td><td class="links-green">1-2</td><td class="cumul-blue">6-8</td><td class="ref-low">0.55%</td><td style="font-size:12px">Scale up, follow-ups from Week 5</td></tr>
+      <tr><td><b>M2</b></td><td><b>Week 7</b></td><td class="emails-count">24</td><td class="followup-count">12</td><td class="center">4</td><td class="center"><b>40</b></td><td class="links-green">1-2</td><td class="cumul-blue">7-9</td><td class="ref-low">0.60%</td><td style="font-size:12px">Content creation, link verification</td></tr>
+      <tr class="alt-row"><td><b>M2</b></td><td><b>Week 8</b></td><td class="emails-count">20</td><td class="followup-count">10</td><td class="center">3</td><td class="center"><b>33</b></td><td class="links-green">1-2</td><td class="cumul-blue">8-10</td><td class="ref-low">0.73%</td><td style="font-size:12px">Close Month 2, monthly report</td></tr>
+
+      <!-- Month 3 -->
+      <tr class="month-header"><td colspan="10">MONTH 3: MOMENTUM (Target: 8 links)</td></tr>
+      <tr><td><b>M3</b></td><td><b>Week 9</b></td><td class="emails-count">30</td><td class="followup-count">10</td><td class="center">5</td><td class="center"><b>45</b></td><td class="links-green">2</td><td class="cumul-blue">10-12</td><td class="ref-low">0.85%</td><td style="font-size:12px">Increased volume, Tier 2 publications targeted</td></tr>
+      <tr class="alt-row"><td><b>M3</b></td><td><b>Week 10</b></td><td class="emails-count">30</td><td class="followup-count">14</td><td class="center">5</td><td class="center"><b>49</b></td><td class="links-green">2</td><td class="cumul-blue">12-14</td><td class="ref-low">0.95%</td><td style="font-size:12px">Digital PR pitches, HARO acceleration</td></tr>
+      <tr><td><b>M3</b></td><td><b>Week 11</b></td><td class="emails-count">30</td><td class="followup-count">14</td><td class="center">5</td><td class="center"><b>49</b></td><td class="links-green">2</td><td class="cumul-blue">14-16</td><td class="ref-low">1.10%</td><td style="font-size:12px">Content production at scale</td></tr>
+      <tr class="alt-row"><td><b>M3</b></td><td><b>Week 12</b></td><td class="emails-count">24</td><td class="followup-count">12</td><td class="center">4</td><td class="center"><b>40</b></td><td class="links-green">2</td><td class="cumul-blue">16-18</td><td class="ref-low">1.23%</td><td style="font-size:12px">Close Month 3, quarterly review</td></tr>
+
+      <!-- Months 4-6 -->
+      <tr class="month-header"><td colspan="10">MONTHS 4-6: OPTIMIZE (Target: 10-12 links/month)</td></tr>
+      <tr><td><b>M4-6</b></td><td><b>Weeks 13-24</b></td><td class="emails-count">30-40/wk</td><td class="followup-count">14-18/wk</td><td class="center">5-6/wk</td><td class="center"><b>50-60/wk</b></td><td class="links-green">2-3/wk</td><td class="cumul-blue">28-50</td><td class="ref-low">1.96%-3.93%</td><td style="font-size:12px">Consistent output, higher DR targets, digital PR</td></tr>
+
+      <!-- Months 7-9 -->
+      <tr class="month-header green"><td colspan="10" style="background:#38A169">MONTHS 7-9: ACCELERATE (Target: 12-14 links/month)</td></tr>
+      <tr class="highlight-row"><td><b>M7-9</b></td><td><b>Weeks 25-36</b></td><td class="emails-count">35-45/wk</td><td class="followup-count">16-20/wk</td><td class="center">6-8/wk</td><td class="center"><b>55-70/wk</b></td><td class="links-green">3-4/wk</td><td class="cumul-blue">62-88</td><td class="ref-high">4.99%-7.20%</td><td style="font-size:12px;font-weight:700;color:#38A169">5% TARGET HIT (Month 7). Premium DR 70-80+ links. Scale everything.</td></tr>
+
+      <!-- Months 10-12 -->
+      <tr class="month-header green"><td colspan="10" style="background:#38A169">MONTHS 10-12: MAXIMIZE (Target: 14-15 links/month)</td></tr>
+      <tr class="highlight-row"><td><b>M10-12</b></td><td><b>Weeks 37-48</b></td><td class="emails-count">40-50/wk</td><td class="followup-count">18-22/wk</td><td class="center">6-8/wk</td><td class="center"><b>65-80/wk</b></td><td class="links-green">3-4/wk</td><td class="cumul-blue">102-131</td><td class="ref-high">8.35%-9.99%</td><td style="font-size:12px;font-weight:700;color:#38A169">10% STRETCH TARGET (Month 12). Elite placements. 131 total links.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ==================== TAB 4: OUTREACH TRACKER ==================== -->
+<div id="tab4" class="tab-content">
+  <h1>OUTREACH EMAIL TRACKER — LOG EVERY EMAIL HERE</h1>
+  <p class="subtitle">Track every outreach email, follow-up, response, and result. Update daily.</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th><th>Date Sent</th><th>Target Website</th><th>Contact Person & Email</th><th>DR</th><th>Email Type</th><th>Status</th><th>Follow-up #1<br>Date</th><th>Follow-up #2<br>Date</th><th>Response<br>Date</th><th>Result</th><th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="center">1</td><td>Mar 2, 2026</td><td>homedesignblog.com</td><td>sarah@homedesignblog.com</td><td class="center">65</td><td>Guest Post</td>
+        <td class="status-yes">YES - Writing</td><td>Mar 5</td><td>N/A</td><td>Mar 6</td><td class="status-yes">LINK ACQUIRED</td><td>Article published Mar 15</td>
+      </tr>
+      <tr class="alt-row">
+        <td class="center">2</td><td>Mar 2, 2026</td><td>furnituretips.com</td><td>editor@furnituretips.com</td><td class="center">62</td><td>Guest Post</td>
+        <td class="status-noreply">No Reply</td><td>Mar 5</td><td>Mar 12</td><td>-</td><td class="status-noreply">MOVED ON</td><td>No response after 2 follow-ups</td>
+      </tr>
+      <tr>
+        <td class="center">3</td><td>Mar 2, 2026</td><td>interiordesignmag.com</td><td>james@interiordesignmag.com</td><td class="center">71</td><td>Guest Post</td>
+        <td class="status-pending">YES - Pending</td><td>Mar 5</td><td>N/A</td><td>Mar 7</td><td class="status-pending">IN PROGRESS</td><td>Article submitted, waiting for publish</td>
+      </tr>
+      <tr class="alt-row">
+        <td class="center">4</td><td>Mar 2, 2026</td><td>homedecorinspo.com</td><td>info@homedecorinspo.com</td><td class="center">58</td><td>Guest Post</td>
+        <td class="status-rejected">REJECTED</td><td>-</td><td>-</td><td>-</td><td class="status-rejected">BELOW DR 60</td><td>DR too low — shouldn't have sent</td>
+      </tr>
+      <!-- Empty rows for user input -->
+      <tr class="input-row"><td class="center">5</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr class="input-row"><td class="center">6</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr class="input-row"><td class="center">7</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr class="input-row"><td class="center">8</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr class="input-row"><td class="center">9</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr class="input-row"><td class="center">10</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr class="input-row"><td class="center">11</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr class="input-row"><td class="center">12</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr class="input-row"><td class="center">13</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr class="input-row"><td class="center">14</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr class="input-row"><td class="center">15</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr class="input-row"><td class="center">16</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr class="input-row"><td class="center">17</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr class="input-row"><td class="center">18</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr class="input-row"><td class="center">19</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr class="input-row"><td class="center">20</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+function showTab(tabId) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  const btns = document.querySelectorAll('.tab-btn');
+  const idx = {'tab1':0,'tab2':1,'tab3':2,'tab4':3}[tabId];
+  btns[idx].classList.add('active');
+}
+</script>
+</body>
+</html>
